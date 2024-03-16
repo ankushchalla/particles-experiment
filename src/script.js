@@ -14,12 +14,12 @@ const particlesTexture = textureLoader.load('/textures/particles/1.png')
  * Base
  */
 // Debug
-const parameters = {
-    radius: 5,
-    levels: 3,
-    radiusMin: 3,
-    radiusMax: 7
-}
+// const parameters = {
+//     radius: 5,
+//     levels: 3,
+//     radiusMin: 3,
+//     radiusMax: 7
+// }
 // gui.add(parameters, 'radius')
 //     .step(1)
 //     .min(1)
@@ -39,7 +39,7 @@ const scene = new THREE.Scene()
 /**
  * Objects
  */
-function createPositions(count, radius, height) {
+function createPositions(count, radius, yMin, yMax) {
     const positions = new Float32Array(count * 3)
     for (let i = 0; i < positions.length; i += 3) {
         const x = i 
@@ -47,7 +47,8 @@ function createPositions(count, radius, height) {
         const z = i + 2
         const angle = Math.random() * 2 * Math.PI
         positions[x] = Math.sin(angle) * radius
-        positions[y] = (Math.random() - .5) * 2 * height
+        const height = yMax - yMin
+        positions[y] = yMin + (Math.random() * height)
         positions[z] = Math.cos(angle) * radius
     }
     return positions
@@ -67,17 +68,27 @@ function createParticlesMaterial(color) {
     particlesMaterial.color = color
     return particlesMaterial
 }
+const axesHelper = new THREE.AxesHelper( 5 );
+scene.add( axesHelper );
 // Particles set 1
 const particlesOne = {
     count: 5000,
     radius: 5,
-    height: 10, 
+    yMin: 3,
+    yMax: 5, 
     color: new THREE.Color('#ff88cc')
 }
-const particleData = [particlesOne]
+const particlesTwo = {
+    count: 5000,
+    radius: 7,
+    yMin: 0,
+    yMax: 3, 
+    color: new THREE.Color('white')
+}
+const particleData = [particlesOne, particlesTwo]
 const particles = []
 for (const particle of particleData) {
-    const positions = createPositions(particle.count, particle.radius, particle.height)
+    const positions = createPositions(particle.count, particle.radius, particle.yMin, particle.yMax)
     const particlesGeometry = createParticleGeometry(positions)
     const particlesMaterial = createParticlesMaterial(particle.color)
     const particleSet = new THREE.Points(particlesGeometry, particlesMaterial)
@@ -85,15 +96,6 @@ for (const particle of particleData) {
 }
 
 scene.add(...particles)
-
-// Floor
-const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(5, 5),
-    new THREE.MeshBasicMaterial({ color: '#a9c388' })
-)
-floor.rotation.x = - Math.PI * 0.5
-floor.position.y = 0
-// scene.add(floor)
 
 /**
  * Sizes
@@ -123,7 +125,7 @@ window.addEventListener('resize', () => {
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 
-camera.position.z = 1   
+camera.position.z = 1
 scene.add(camera)
 
 // Controls
