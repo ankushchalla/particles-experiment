@@ -14,12 +14,18 @@ const particlesTexture = textureLoader.load('/textures/particles/1.png')
  * Base
  */
 // Debug
-// const parameters = {
-//     radius: 5,
-//     levels: 3,
-//     radiusMin: 3,
-//     radiusMax: 7
-// }
+const parameters = {
+    numRings: 10,
+    countMin: 1000,
+    countMax: 10000,
+    radiusMin: 3,
+    radiusMax: 7,
+    yMin: -10,
+    yMax: 10,
+    hslMin: 190,
+    hslMax: 360,
+    rotationScaler: .1
+}
 // gui.add(parameters, 'radius')
 //     .step(1)
 //     .min(1)
@@ -39,6 +45,20 @@ const scene = new THREE.Scene()
 /**
  * Objects
  */
+// Create a particle with randomly generated parameters
+function random(min, max) {
+    return Math.random() * (max - min) + min
+}
+function createRandomParticleData() {
+    const count = random(parameters.countMin, parameters.countMax)
+    const radius = random(parameters.radiusMin, parameters.radiusMax)
+    const randHsl = random(parameters.hslMin, parameters.hslMax)
+    const color = new THREE.Color(`hsl(${randHsl}, 98%, 49%)`)
+    let yMin = random(parameters.yMin, parameters.yMax)
+    let yMax = random(parameters.yMin, parameters.yMax)
+    if (yMin > yMax) [yMin, yMax] = [yMax, yMin]
+    return { count, radius, yMin, yMax, color }
+}
 function createPositions(count, radius, yMin, yMax) {
     const positions = new Float32Array(count * 3)
     for (let i = 0; i < positions.length; i += 3) {
@@ -70,32 +90,18 @@ function createParticlesMaterial(color) {
 }
 const axesHelper = new THREE.AxesHelper( 5 );
 scene.add( axesHelper );
-// Particles set 1
-const particlesOne = {
-    count: 5000,
-    radius: 5,
-    yMin: 3,
-    yMax: 5, 
-    color: new THREE.Color('#ff88cc')
-}
-const particlesTwo = {
-    count: 5000,
-    radius: 7,
-    yMin: 0,
-    yMax: 3, 
-    color: new THREE.Color('white')
-}
-const particleData = [particlesOne, particlesTwo]
-const particles = []
-for (const particle of particleData) {
-    const positions = createPositions(particle.count, particle.radius, particle.yMin, particle.yMax)
+
+const allParticles = []
+for (let i = 0; i < parameters.numRings; i++) {
+    const particles = createRandomParticleData()
+    const positions = createPositions(particles.count, particles.radius, particles.yMin, particles.yMax)
     const particlesGeometry = createParticleGeometry(positions)
-    const particlesMaterial = createParticlesMaterial(particle.color)
+    const particlesMaterial = createParticlesMaterial(particles.color)
     const particleSet = new THREE.Points(particlesGeometry, particlesMaterial)
-    particles.push(particleSet)
+    allParticles.push(particleSet)
 }
 
-scene.add(...particles)
+scene.add(...allParticles)
 
 /**
  * Sizes
@@ -125,7 +131,7 @@ window.addEventListener('resize', () => {
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 
-camera.position.z = 1
+camera.position.z = 10
 scene.add(camera)
 
 // Controls
@@ -149,6 +155,11 @@ const clock = new THREE.Clock()
 
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
+
+    for (const particle of allParticles) {
+        const rotationDirection = Math.sign(Math.random() * 2 - 1)
+        particle.rotation.y = elapsedTime * rotationDirection * parameters.rotationScaler
+    }
 
     // Update controls
     controls.update()
