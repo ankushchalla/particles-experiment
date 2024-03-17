@@ -24,8 +24,28 @@ const parameters = {
     yMax: 10,
     hslMin: 190,
     hslMax: 360,
-    rotationScaler: .1
+    rotationScaler: .1,
+    cameraOrientation: 'front'
 }
+gui.add(parameters, 'cameraOrientation', ['front', 'above', 'below', 'inside'])
+    .onChange(position => {
+        if (position === 'front') {
+            camera.position.y = 0
+            camera.position.z = 12
+        } 
+        else if (position === 'above') {
+            camera.position.y = 12
+            camera.position.z = 0
+        }
+        else if (position === 'below') {
+            camera.position.y = - 12
+            camera.position.z = 0
+        } 
+        else if (position === 'inside') {
+            camera.position.y = 0
+            camera.position.z = 1
+        } 
+    })
 // gui.add(parameters, 'radius')
 //     .step(1)
 //     .min(1)
@@ -88,8 +108,6 @@ function createParticlesMaterial(color) {
     particlesMaterial.color = color
     return particlesMaterial
 }
-const axesHelper = new THREE.AxesHelper( 5 );
-scene.add( axesHelper );
 
 const allParticles = []
 for (let i = 0; i < parameters.numRings; i++) {
@@ -100,7 +118,7 @@ for (let i = 0; i < parameters.numRings; i++) {
     const particleSet = new THREE.Points(particlesGeometry, particlesMaterial)
     allParticles.push(particleSet)
 }
-
+// allParticles.forEach(particle => particle.rotation.z = Math.PI * .5)
 scene.add(...allParticles)
 
 /**
@@ -131,7 +149,8 @@ window.addEventListener('resize', () => {
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 
-camera.position.z = 10
+camera.position.z = 12
+// camera.position.y = 10
 scene.add(camera)
 
 // Controls
@@ -157,8 +176,7 @@ const tick = () => {
     const elapsedTime = clock.getElapsedTime()
 
     for (const particle of allParticles) {
-        const rotationDirection = Math.sign(Math.random() * 2 - 1)
-        particle.rotation.y = elapsedTime * rotationDirection * parameters.rotationScaler
+        particle.rotation.y = elapsedTime * parameters.rotationScaler
     }
 
     // Update controls
