@@ -24,9 +24,10 @@ const parameters = {
     yMax: 10,
     hslMin: 190,
     hslMax: 360,
-    rotationScaler: .1,
+    rotationScaler: .05,
     cameraOrientation: 'front',
-    theme: 'night'
+    theme: 'night',
+    fullscreen: false
 }
 function dispose() {
     for (const particles of allParticles) {
@@ -58,10 +59,11 @@ gui.add(parameters, 'theme', ['night', 'day', 'ocean'])
             gui.controllers.forEach(controller => controller.updateDisplay())
             allParticles = createAllParticles(parameters)
             scene.add(...allParticles)
-        } 
+        }
     })
 gui.add(parameters, 'cameraOrientation', ['front', 'above', 'below', 'inside'])
     .onChange(position => {
+        controls.target = new THREE.Vector3(0,0,0)
         if (position === 'front') {
             camera.position.y = 0
             camera.position.z = 12
@@ -75,8 +77,9 @@ gui.add(parameters, 'cameraOrientation', ['front', 'above', 'below', 'inside'])
             camera.position.z = 0
         }
         else if (position === 'inside') {
+            controls.target = new THREE.Vector3(0,0,-.5)
             camera.position.y = 0
-            camera.position.z = .1
+            camera.position.z = 0
 
         }
     })
@@ -208,8 +211,7 @@ const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
 }
-
-window.addEventListener('resize', () => {
+function handleResize() {
     // Update sizes
     sizes.width = window.innerWidth
     sizes.height = window.innerHeight
@@ -221,7 +223,9 @@ window.addEventListener('resize', () => {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-})
+}
+window.addEventListener('resize', handleResize)
+
 
 /**
  * Camera
