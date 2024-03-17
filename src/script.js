@@ -25,14 +25,47 @@ const parameters = {
     hslMin: 190,
     hslMax: 360,
     rotationScaler: .1,
-    cameraOrientation: 'front'
+    cameraOrientation: 'front',
+    theme: 'night'
 }
+function dispose() {
+    for (const particles of allParticles) {
+        particles.geometry.dispose()
+        particles.material.dispose()
+        scene.remove(particles)
+    }
+}
+gui.add(parameters, 'theme', ['night', 'day', 'ocean'])
+    .onChange(theme => {
+        if (theme === 'night') {
+            dispose()
+            parameters.hslMin = 190
+            parameters.hslMax = 360
+            gui.controllers.forEach(controller => controller.updateDisplay())
+            allParticles = createAllParticles(parameters)
+            scene.add(...allParticles)
+        } else if (theme === 'day') {
+            dispose()
+            parameters.hslMin = 0
+            parameters.hslMax = 60
+            gui.controllers.forEach(controller => controller.updateDisplay())
+            allParticles = createAllParticles(parameters)
+            scene.add(...allParticles)
+        } else if (theme === 'ocean') {
+            dispose()
+            parameters.hslMin = 150
+            parameters.hslMax = 250
+            gui.controllers.forEach(controller => controller.updateDisplay())
+            allParticles = createAllParticles(parameters)
+            scene.add(...allParticles)
+        } 
+    })
 gui.add(parameters, 'cameraOrientation', ['front', 'above', 'below', 'inside'])
     .onChange(position => {
         if (position === 'front') {
             camera.position.y = 0
             camera.position.z = 12
-        } 
+        }
         else if (position === 'above') {
             camera.position.y = 12
             camera.position.z = 0
@@ -40,21 +73,65 @@ gui.add(parameters, 'cameraOrientation', ['front', 'above', 'below', 'inside'])
         else if (position === 'below') {
             camera.position.y = - 12
             camera.position.z = 0
-        } 
+        }
         else if (position === 'inside') {
             camera.position.y = 0
-            camera.position.z = 1
-        } 
+            camera.position.z = .1
+
+        }
     })
-// gui.add(parameters, 'radius')
-//     .step(1)
-//     .min(1)
-//     .max(20)
-//     .onChange(newRadius => {
-//         particles.geometry.dispose()
-//         const positions = createPositions(5000, newRadius, 10)
-//         particles.geometry = createParticleGeometry(positions)
-//     })
+gui.add(parameters, 'numRings')
+    .step(1)
+    .min(1)
+    .max(30)
+    .onChange(numRings => {
+        dispose()
+        const newParameters = {
+            numRings,
+            ...parameters
+        }
+        allParticles = createAllParticles(newParameters)
+        scene.add(...allParticles)
+    })
+gui.add(parameters, 'radiusMax')
+    .step(1)
+    .min(1)
+    .max(30)
+    .onChange(radiusMax => {
+        dispose()
+        const newParameters = {
+            radiusMax,
+            ...parameters
+        }
+        allParticles = createAllParticles(newParameters)
+        scene.add(...allParticles)
+    })
+gui.add(parameters, 'hslMin')
+    .step(.25)
+    .min(0)
+    .max(360)
+    .onChange(hslMin => {
+        dispose()
+        const newParameters = {
+            hslMin,
+            ...parameters
+        }
+        allParticles = createAllParticles(newParameters)
+        scene.add(...allParticles)
+    })
+gui.add(parameters, 'hslMax')
+    .step(.25)
+    .min(0)
+    .max(360)
+    .onChange(hslMax => {
+        dispose()
+        const newParameters = {
+            hslMax,
+            ...parameters
+        }
+        allParticles = createAllParticles(newParameters)
+        scene.add(...allParticles)
+    })
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -69,7 +146,7 @@ const scene = new THREE.Scene()
 function random(min, max) {
     return Math.random() * (max - min) + min
 }
-function createRandomParticleData() {
+function createRandomParticleData(parameters) {
     const count = random(parameters.countMin, parameters.countMax)
     const radius = random(parameters.radiusMin, parameters.radiusMax)
     const randHsl = random(parameters.hslMin, parameters.hslMax)
@@ -82,7 +159,7 @@ function createRandomParticleData() {
 function createPositions(count, radius, yMin, yMax) {
     const positions = new Float32Array(count * 3)
     for (let i = 0; i < positions.length; i += 3) {
-        const x = i 
+        const x = i
         const y = i + 1
         const z = i + 2
         const angle = Math.random() * 2 * Math.PI
@@ -108,17 +185,20 @@ function createParticlesMaterial(color) {
     particlesMaterial.color = color
     return particlesMaterial
 }
-
-const allParticles = []
-for (let i = 0; i < parameters.numRings; i++) {
-    const particles = createRandomParticleData()
-    const positions = createPositions(particles.count, particles.radius, particles.yMin, particles.yMax)
-    const particlesGeometry = createParticleGeometry(positions)
-    const particlesMaterial = createParticlesMaterial(particles.color)
-    const particleSet = new THREE.Points(particlesGeometry, particlesMaterial)
-    allParticles.push(particleSet)
+function createAllParticles(parameters) {
+    const allParticles = []
+    for (let i = 0; i < parameters.numRings; i++) {
+        const particles = createRandomParticleData(parameters)
+        const positions = createPositions(particles.count, particles.radius, particles.yMin, particles.yMax)
+        const particlesGeometry = createParticleGeometry(positions)
+        const particlesMaterial = createParticlesMaterial(particles.color)
+        const particleSet = new THREE.Points(particlesGeometry, particlesMaterial)
+        allParticles.push(particleSet)
+    }
+    return allParticles
 }
-// allParticles.forEach(particle => particle.rotation.z = Math.PI * .5)
+
+let allParticles = createAllParticles(parameters)
 scene.add(...allParticles)
 
 /**
