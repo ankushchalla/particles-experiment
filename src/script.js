@@ -64,6 +64,7 @@ gui.add(parameters, 'theme', ['night', 'day', 'ocean'])
 gui.add(parameters, 'cameraOrientation', ['front', 'above', 'below', 'inside'])
     .onChange(position => {
         controls.target = new THREE.Vector3(0,0,0)
+        camera.position.x = 0
         if (position === 'front') {
             camera.position.y = 0
             camera.position.z = 12
@@ -80,7 +81,6 @@ gui.add(parameters, 'cameraOrientation', ['front', 'above', 'below', 'inside'])
             controls.target = new THREE.Vector3(0,0,-.5)
             camera.position.y = 0
             camera.position.z = 0
-
         }
     })
 gui.add(parameters, 'numRings')
